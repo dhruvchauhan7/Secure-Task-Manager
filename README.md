@@ -1,6 +1,6 @@
 # Secure Task Management System
 
-A full-stack Secure Task Management System built with an **Nx monorepo**, featuring **JWT authentication**, **role-based access control (RBAC)**, and a responsive **Angular dashboard** for managing tasks.
+A full-stack **Secure Task Management System** built with an **Nx monorepo**, featuring **JWT authentication**, **role-based access control (RBAC)**, and a responsive **Angular dashboard** for managing tasks.
 
 This project demonstrates secure API design, frontend–backend integration, and a pragmatic testing strategy suitable for production-grade applications.
 
@@ -22,6 +22,7 @@ This project demonstrates secure API design, frontend–backend integration, and
 ## Overview
 
 The system allows users to:
+
 - Authenticate using JWT
 - Access features based on their role (OWNER / ADMIN / VIEWER)
 - Create, edit, delete, categorize, sort, and filter tasks
@@ -43,7 +44,7 @@ Security and clarity were prioritized over unnecessary complexity.
 - **Angular (standalone components)**
 - **Nx workspace**
 - **Responsive CSS (no UI framework)**
-- **Karma/Jasmine (unit tests)**
+- **Karma / Jasmine (unit tests)**
 
 ### Monorepo Tooling
 - **Nx 17**
@@ -61,43 +62,68 @@ Security and clarity were prioritized over unnecessary complexity.
 
 ---
 
-### 1. Install dependencies
+### 1. Install Dependencies
+
 ```bash
 npm install
+```
 
+---
 
 ### 2. Environment Variables
 
-Create a .env file in the project root:
+Create a `.env` file in the project root:
 
+```env
 JWT_SECRET=fallback_dev_secret
 JWT_EXPIRES_IN=3600
+```
 
+---
 
-3. Run Backend (API)
+### 3. Run Backend (API)
+
+```bash
 npx nx serve api
+```
 
 API will be available at:
+
+```
 http://localhost:3000/api
+```
 
-4. Run Frontend (Dashboard)
+---
+
+### 4. Run Frontend (Dashboard)
+
+```bash
 npx nx serve dashboard
-
+```
 
 Dashboard will be available at:
 
+```
 http://localhost:4200
+```
 
-Demo Users
-Role	Email	Password
-OWNER	owner@demo.com
-	Owner123!
-ADMIN	admin@demo.com
-	Admin123!
-VIEWER	viewer@demo.com
-	Viewer123!
-Architecture Overview
-Nx Monorepo Layout
+---
+
+## Demo Users
+
+| Role   | Email            | Password    |
+|--------|------------------|-------------|
+| OWNER  | owner@demo.com   | Owner123!  |
+| ADMIN  | admin@demo.com   | Admin123!  |
+| VIEWER | viewer@demo.com  | Viewer123! |
+
+---
+
+## Architecture Overview
+
+### Nx Monorepo Layout
+
+```text
 apps/
   api/              → NestJS backend
   api-e2e/          → Backend E2E tests
@@ -107,19 +133,22 @@ apps/
 libs/
   auth/             → Shared auth utilities (guards, decorators)
   data/             → Shared DTOs & interfaces
+```
 
-Rationale
+### Rationale
 
-Clear separation of concerns
+- Clear separation of concerns
+- Shared code without tight coupling
+- Scales well for larger teams
+- Single dependency graph & tooling
 
-Shared code without tight coupling
+---
 
-Scales well for larger teams
+## Data Model
 
-Single dependency graph & tooling
+### User
 
-Data Model
-User
+```text
 User
 ----
 id
@@ -127,8 +156,11 @@ email
 password
 role (OWNER | ADMIN | VIEWER)
 orgId
+```
 
-Task
+### Task
+
+```text
 Task
 ----
 id
@@ -140,161 +172,182 @@ createdByEmail
 orgId
 createdAt
 updatedAt
+```
 
-Entity Relationship (Logical)
+### Entity Relationship (Logical)
+
+```text
 Organization
    |
    |-- Users (roles)
    |
    |-- Tasks
+```
 
+Tasks belong to an organization and are created by users within that organization.
 
-Tasks belong to an organization and are created by users within that org.
+---
 
-Access Control Implementation
-Roles
-Role	Permissions
-OWNER	Full access (CRUD)
-ADMIN	Full access (CRUD)
-VIEWER	Read-only
-How RBAC Works
+## Access Control Implementation
 
-JWT Authentication
+### Roles
 
-User logs in
+| Role   | Permissions        |
+|--------|--------------------|
+| OWNER  | Full access (CRUD) |
+| ADMIN  | Full access (CRUD) |
+| VIEWER | Read-only          |
 
-Server issues JWT containing:
+---
 
-userId
+### How RBAC Works
 
-role
+#### JWT Authentication
+- User logs in
+- Server issues a JWT containing:
+  - userId
+  - role
+  - orgId
 
-orgId
+#### Guards
+- `JwtAuthGuard` validates the token
+- `RolesGuard` checks role permissions
 
-Guards
+#### Decorators
+- `@Roles('OWNER', 'ADMIN')` restricts routes
 
-JwtAuthGuard validates token
+#### Frontend
+- UI disables create/edit/delete for VIEWER
+- Backend always enforces RBAC regardless of UI
 
-RolesGuard checks role permissions
+---
 
-Decorators
+## API Documentation
 
-@Roles('OWNER', 'ADMIN') restricts routes
+### Authentication
 
-Frontend
+#### Login
 
-UI disables create/edit/delete for VIEWER
-
-Backend always enforces RBAC regardless of UI
-
-API Documentation
-Authentication
-Login
+```http
 POST /api/auth/login
+```
 
-
-Request
-
+**Request**
+```json
 {
   "email": "owner@demo.com",
   "password": "Owner123!"
 }
+```
 
-
-Response
-
+**Response**
+```json
 {
   "accessToken": "eyJhbGciOi..."
 }
+```
 
-Tasks
-Get Tasks
+---
+
+### Tasks
+
+#### Get Tasks
+
+```http
 GET /api/tasks
 Authorization: Bearer <token>
+```
 
-Create Task
+---
+
+#### Create Task
+
+```http
 POST /api/tasks
 Authorization: Bearer <token>
+```
 
+```json
 {
   "title": "Write README",
   "description": "Finish documentation",
   "status": "OPEN",
   "category": "Work"
 }
+```
 
-Update Task
+---
+
+#### Update Task
+
+```http
 PUT /api/tasks/:id
 Authorization: Bearer <token>
+```
 
-Delete Task
+---
+
+#### Delete Task
+
+```http
 DELETE /api/tasks/:id
 Authorization: Bearer <token>
+```
 
-Testing Strategy
-Backend Tests (Jest + Supertest)
+---
+
+## Testing Strategy
+
+### Backend Tests (Jest + Supertest)
 
 Run:
 
+```bash
 npx nx e2e api-e2e
-
+```
 
 Covered:
+- Authentication (login returns JWT)
+- RBAC enforcement (viewer forbidden)
+- Owner/Admin CRUD access
+- Task lifecycle (create → update → delete)
 
-Authentication (login returns JWT)
+---
 
-RBAC enforcement (viewer forbidden)
-
-Owner/Admin CRUD access
-
-Task lifecycle (create → update → delete)
-
-Frontend Tests (Karma/Jasmine)
+### Frontend Tests (Karma / Jasmine)
 
 Run:
 
+```bash
 npx nx test dashboard
-
+```
 
 Covered:
-
-Dashboard renders
-
-Task list loads
-
-Create button disabled for VIEWER
-
-Task creation interaction
+- Dashboard renders
+- Task list loads
+- Create button disabled for VIEWER
+- Task creation interaction
 
 Focused on critical paths, not exhaustive UI coverage.
 
-Future Considerations
-Advanced Role Delegation
+---
 
-Per-project roles
+## Future Considerations
 
-Temporary permissions
+### Advanced Role Delegation
+- Per-project roles
+- Temporary permissions
+- Role inheritance
 
-Role inheritance
+### Production-Ready Security
+- Refresh tokens
+- Token rotation
+- CSRF protection
+- Secure cookie storage
+- Password hashing (bcrypt)
 
-Production-Ready Security
-
-Refresh tokens
-
-Token rotation
-
-CSRF protection
-
-Secure cookie storage
-
-Password hashing (bcrypt)
-
-Performance & Scalability
-
-Permission caching
-
-Query optimization
-
-Background audit logging
-
-Horizontal scaling
+### Performance & Scalability
+- Permission caching
+- Query optimization
+- Background audit logging
+- Horizontal scaling
