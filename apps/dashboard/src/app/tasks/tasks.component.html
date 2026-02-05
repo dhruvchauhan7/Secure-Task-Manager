@@ -1,0 +1,199 @@
+<section class="page">
+  <div class="hero">
+    <div>
+      <h1>Tasks</h1>
+      <p>Create, update, and track tasks within your organization.</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" (click)="refresh()" [disabled]="loading">
+        {{ loading ? 'Refreshing…' : 'Refresh' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Create -->
+    <div class="card">
+      <div class="card-title">Create Task</div>
+
+      <div class="form">
+        <div class="row row-3">
+          <label>
+            <span>Title</span>
+            <input
+              type="text"
+              [(ngModel)]="title"
+              placeholder="e.g., Screening Interview"
+            />
+          </label>
+
+          <label>
+            <span>Status</span>
+            <select [(ngModel)]="status">
+              <option *ngFor="let s of statuses" [ngValue]="s">{{ s }}</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Category</span>
+            <select [(ngModel)]="category">
+              <option *ngFor="let c of categories" [ngValue]="c">{{ c }}</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          <span>Description</span>
+          <textarea
+            [(ngModel)]="description"
+            rows="4"
+            placeholder="Optional details…"
+          ></textarea>
+        </label>
+
+        <div class="form-actions">
+          <button
+            class="btn btn-primary"
+            (click)="create()"
+            [disabled]="!auth.canWrite() || creating || !title.trim()"
+            [title]="auth.canWrite() ? '' : 'Viewer role cannot create tasks'"
+          >
+            {{ creating ? 'Creating…' : 'Create task' }}
+          </button>
+
+          <div class="hint" *ngIf="!auth.canWrite()">Viewer role: read-only access</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- List -->
+    <div class="card">
+      <div class="card-title">Task List</div>
+
+      <div class="banner error" *ngIf="error">{{ error }}</div>
+      <div class="banner muted" *ngIf="loading">Loading…</div>
+
+      <!-- Filters / Sort -->
+      <div class="filters">
+        <label>
+          <span>Status</span>
+          <select [(ngModel)]="filterStatus">
+            <option [ngValue]="'ALL'">All</option>
+            <option *ngFor="let s of statuses" [ngValue]="s">{{ s }}</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Category</span>
+          <select [(ngModel)]="filterCategory">
+            <option [ngValue]="'ALL'">All</option>
+            <option *ngFor="let c of filterCategoryOptions" [ngValue]="c">{{ c }}</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Sort</span>
+          <select [(ngModel)]="sortKey">
+            <option [ngValue]="'UPDATED_AT'">Updated</option>
+            <option [ngValue]="'CREATED_AT'">Created</option>
+            <option [ngValue]="'TITLE'">Title</option>
+            <option [ngValue]="'STATUS'">Status</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Dir</span>
+          <select [(ngModel)]="sortDir">
+            <option [ngValue]="'DESC'">Desc</option>
+            <option [ngValue]="'ASC'">Asc</option>
+          </select>
+        </label>
+
+        <button class="btn btn-secondary reset" (click)="clearFilters()">Reset</button>
+      </div>
+
+      <div class="empty" *ngIf="!loading && visibleTasks.length === 0">No tasks yet.</div>
+
+      <div class="task-list" *ngIf="visibleTasks.length > 0">
+        <div class="task" *ngFor="let t of visibleTasks; trackBy: trackById">
+          <!-- VIEW MODE -->
+          <ng-container *ngIf="editingId !== t.id; else editMode">
+            <div class="task-top">
+              <div class="task-title">{{ t.title }}</div>
+
+              <div class="right">
+                <span class="pill pill-cat">{{ t.category ?? 'Uncategorized' }}</span>
+                <span class="pill">{{ t.status }}</span>
+              </div>
+            </div>
+
+            <div class="task-desc" *ngIf="t.description">{{ t.description }}</div>
+
+            <div class="task-meta">
+              <span>Created by {{ t.createdByEmail }}</span>
+              <span class="dot">•</span>
+              <span>{{ t.updatedAt | date: 'medium' }}</span>
+            </div>
+
+            <div class="task-actions" *ngIf="auth.canWrite()">
+              <button class="btn btn-secondary" (click)="startEdit(t)">Edit</button>
+              <button
+                class="btn btn-danger"
+                (click)="deleteTask(t)"
+                [disabled]="deletingId === t.id"
+              >
+                {{ deletingId === t.id ? 'Deleting…' : 'Delete' }}
+              </button>
+            </div>
+          </ng-container>
+
+          <!-- EDIT MODE -->
+          <ng-template #editMode>
+            <div class="edit">
+              <div class="row row-3">
+                <label>
+                  <span>Title</span>
+                  <input type="text" [(ngModel)]="editTitle" />
+                </label>
+
+                <label>
+                  <span>Status</span>
+                  <select [(ngModel)]="editStatus">
+                    <option *ngFor="let s of statuses" [ngValue]="s">{{ s }}</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span>Category</span>
+                  <select [(ngModel)]="editCategory">
+                    <option *ngFor="let c of categories" [ngValue]="c">{{ c }}</option>
+                  </select>
+                </label>
+              </div>
+
+              <label>
+                <span>Description</span>
+                <textarea [(ngModel)]="editDescription" rows="4"></textarea>
+              </label>
+
+              <div class="edit-actions">
+                <button
+                  class="btn btn-primary"
+                  (click)="saveEdit(t)"
+                  [disabled]="saving || !editTitle.trim()"
+                >
+                  {{ saving ? 'Saving…' : 'Save' }}
+                </button>
+
+                <button class="btn btn-secondary" (click)="cancelEdit()" [disabled]="saving">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

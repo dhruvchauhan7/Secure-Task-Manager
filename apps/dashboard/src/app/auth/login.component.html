@@ -1,0 +1,39 @@
+<div class="auth">
+    <div class="auth__grid">
+      <div class="auth__left">
+        <h1 class="h1">Sign in</h1>
+        <p class="muted" style="margin-top: 8px">
+          Use a demo account to access tasks. Tokens are stored in localStorage for this demo.
+        </p>
+  
+        <div class="demo card">
+          <div class="h2" style="margin-bottom: 10px">Demo accounts</div>
+          <div class="demo__row"><span class="badge">OWNER</span><span>owner&#64;demo.com</span><span class="muted">Owner123!</span></div>
+          <div class="demo__row"><span class="badge">ADMIN</span><span>admin&#64;demo.com</span><span class="muted">Admin123!</span></div>
+          <div class="demo__row"><span class="badge">VIEWER</span><span>viewer&#64;demo.com</span><span class="muted">Viewer123!</span></div>
+        </div>
+      </div>
+  
+      <div class="auth__right card">
+        <form (ngSubmit)="submit()" #f="ngForm" class="form">
+          <div class="h2">Welcome back</div>
+          <p class="muted" style="margin: 6px 0 14px">Enter your credentials to continue.</p>
+  
+          <div *ngIf="error" class="error">{{ error }}</div>
+  
+          <label class="label">
+            Email
+            <input class="input" name="email" [(ngModel)]="email" required />
+          </label>
+  
+          <label class="label">
+            Password
+            <input class="input" name="password" type="password" [(ngModel)]="password" required />
+          </label>
+  
+          <button class="btn" type="submit" [disabled]="f.invalid">Sign in</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  

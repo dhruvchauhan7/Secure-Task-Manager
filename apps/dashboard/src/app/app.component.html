@@ -1,0 +1,40 @@
+<header class="stm-header">
+  <div class="stm-header-inner">
+    <div class="brand">
+      <div class="logo">STM</div>
+      <div class="brand-text">
+        <div class="title">Secure Task Manager</div>
+        <div class="subtitle">JWT • RBAC • Multi-tenant org</div>
+      </div>
+    </div>
+
+    <div class="right" *ngIf="user() as u; else loggedOut">
+      <div class="user-card">
+        <div class="email">{{ u.email }}</div>
+        <div class="meta">
+          <span class="pill">{{ u.role }}</span>
+          <span class="dot">•</span>
+          <span class="org">{{ u.orgId }}</span>
+        </div>
+      </div>
+
+      <button class="btn btn-secondary" type="button" (click)="logout()">
+        Logout
+      </button>
+    </div>
+
+    <ng-template #loggedOut>
+      <div class="right">
+        <span class="hint">Not signed in</span>
+      </div>
+    </ng-template>
+  </div>
+</header>
+
+<h1 style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
+  Welcome dashboard
+</h1>
+
+<main class="stm-main">
+  <router-outlet></router-outlet>
+</main>
